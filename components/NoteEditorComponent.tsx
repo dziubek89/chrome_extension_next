@@ -70,7 +70,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       CodeBlock.extend({
         addOptions() {
           return {
-            //@ts-expect-error
             ...this.parent?.(),
             HTMLAttributes: {
               class: "code-block",
