@@ -1,6 +1,6 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import EmailProvider from "next-auth/providers/email";
+// import EmailProvider from "next-auth/providers/email";
 import User from "@/models/user";
 import { connectToDB } from "@/utils/mongo/database";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
@@ -58,7 +58,6 @@ export const authOptions: AuthOptions = {
     // signIn: "/kalendarz",
   },
   callbacks: {
-
     // async jwt({ token, account, user }) {
     //   if (account) {
     //     token.accessToken = account.access_token;
@@ -69,8 +68,8 @@ export const authOptions: AuthOptions = {
     //   session.accessToken = token.accessToken;
     //   return session;
     // },
-    async session({ session, token, user }) {
-
+    // async session({ session, token, user }) {
+    async session({ session, token }) {
       // store the user id from MongoDB to session
       if (token && token.email && session && session.user) {
         session.user.id = token.id as string;
@@ -81,8 +80,8 @@ export const authOptions: AuthOptions = {
 
       return session;
     },
-    async jwt({ token, account, user }) {
-
+    // async jwt({ token, account, user }) {
+    async jwt({ token }) {
       if (token) {
         await connectToDB();
         const sessionUser = await User.findOne({ email: token.email });
@@ -124,28 +123,26 @@ export const authOptions: AuthOptions = {
   },
 };
 
-//@ts-ignore
-function html({ url, host, email }) {
-  const escapedEmail = `${email.replace(/\./g, "&#8203;.")}`;
-  const escapedHost = `${host.replace(/\./g, "&#8203;.")}`;
-  // Your email template here new
-  return `
-        <body>
-          <p>Cześć, </p>
-          <p>Aby dokończyć logowanie kliknij w poniższy link:</p>
-          <p></p>
-            <a href="${url}">Zaloguj się do ${escapedHost}</a>
-            <p>dziękuję</p>
-            <p>LushLash by Agata</p>
-        </body>
-    `;
-}
+// function html({ url, host, email }) {
+//   const escapedEmail = `${email.replace(/\./g, "&#8203;.")}`;
+//   const escapedHost = `${host.replace(/\./g, "&#8203;.")}`;
+//   // Your email template here new
+//   return `
+//         <body>
+//           <p>Cześć, </p>
+//           <p>Aby dokończyć logowanie kliknij w poniższy link:</p>
+//           <p></p>
+//             <a href="${url}">Zaloguj się do ${escapedHost}</a>
+//             <p>dziękuję</p>
+//             <p>LushLash by Agata</p>
+//         </body>
+//     `;
+// }
 
 // Fallback for non-HTML email clients
-//@ts-ignore
-function text({ url, host }) {
-  return `Zaloguj się do ${host}\n${url}\n\n`;
-}
+// function text({ url, host }) {
+//   return `Zaloguj się do ${host}\n${url}\n\n`;
+// }
 
 const handler = NextAuth(authOptions);
 

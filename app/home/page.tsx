@@ -32,9 +32,9 @@ export default function Home() {
     // console.log("Token wysłany:", token);
   };
 
-  const sendTokenToExtension = (token: any) => {
-    window.postMessage({ type: "SEND_SUPABASE_TOKEN", token }, "*");
-  };
+  // const sendTokenToExtension = (token: any) => {
+  //   window.postMessage({ type: "SEND_SUPABASE_TOKEN", token }, "*");
+  // };
 
   return (
     <Button onClick={getUser} variant="outline">

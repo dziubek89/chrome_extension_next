@@ -70,7 +70,7 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       CodeBlock.extend({
         addOptions() {
           return {
-            //@ts-ignore
+            //@ts-expect-error
             ...this.parent?.(),
             HTMLAttributes: {
               class: "code-block",
@@ -98,7 +98,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
 
   if (!editor) return null;
 
-  //@ts-ignore
   const isActive = (type: string) => editor.isActive(type);
 
   console.log(isActive("bold"));
