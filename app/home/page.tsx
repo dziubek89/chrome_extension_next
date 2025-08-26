@@ -16,20 +16,20 @@ export default function Home() {
 
     const data = await res.json();
 
-    console.log(data);
-
     // console.log(session!.access_token);
     // const token = session!.access_token;
-    // if (typeof window !== "undefined") {
-    //   window.postMessage(
-    //     {
-    //       type: "SEND_SUPABASE_TOKEN",
-    //       token: session!.access_token,
-    //     },
-    //     "*"
-    //   );
-    // }
-    // console.log("Token wysłany:", token);
+    if (typeof window !== "undefined" && data.token) {
+      console.log("window", window);
+
+      window.postMessage(
+        {
+          type: "SET_TOKEN",
+          token: data.token,
+        },
+        "*"
+      );
+    }
+    console.log("Token wysłany:");
   };
 
   // const sendTokenToExtension = (token: any) => {

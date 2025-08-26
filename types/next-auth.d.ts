@@ -7,12 +7,18 @@ declare module "next-auth" {
       role: string;
       isVerified: boolean;
     };
-    accessToken: string;
+    accessToken?: string;
   }
   interface User extends DefaultUser {
     plan: string;
     stripeCustomerId: string;
     role: string;
     isVerified: boolean;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    accessToken?: string;
   }
 }

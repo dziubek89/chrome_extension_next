@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NoteEditor from "@/components/NoteEditorComponent";
+import { useSession } from "next-auth/react";
 
 type Note = {
   _id: string;
@@ -29,8 +30,10 @@ export default function Dashboard() {
 
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const { data: session, status } = useSession();
 
   useEffect(() => {
+    console.log(session, "sesja");
     const fetchNotes = async () => {
       try {
         const res = await fetch("/api/all-notes");
@@ -60,6 +63,21 @@ export default function Dashboard() {
     };
     fetchNotes();
   }, []);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.accessToken) {
+      console.log("Token Google:", session.accessToken);
+
+      // Wyślij token do rozszerzenia Chrome
+      window.postMessage(
+        {
+          type: "SET_TOKEN",
+          token: session.accessToken,
+        },
+        window.origin
+      );
+    }
+  }, [status, session]);
 
   const returnRawTest = (content: string) => {
     const plainText = content.replace(/<[^>]+>/g, "");
