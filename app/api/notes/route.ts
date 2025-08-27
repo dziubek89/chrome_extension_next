@@ -260,3 +260,84 @@ export async function PUT(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const body = await req.json();
+  const { id } = body; // id notatki do usunięcia
+
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = await getToken({ req, secret });
+
+  if (!token || !token.email) {
+    return NextResponse.json(
+      { success: false, message: "Invalid token" },
+      {
+        status: 400,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      }
+    );
+  }
+
+  try {
+    await connectToDB();
+
+    // Sprawdź czy użytkownik istnieje
+    const user = await User.findOne({ email: token.email });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        {
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          },
+        }
+      );
+    }
+
+    // Znajdź notatkę i sprawdź czy należy do użytkownika
+    const note = await Note.findOne({ _id: id, userId: user._id });
+    if (!note) {
+      return NextResponse.json(
+        { success: false, message: "Note not found or not owned by user" },
+        {
+          status: 404,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          },
+        }
+      );
+    }
+
+    // Usuń notatkę
+    await Note.deleteOne({ _id: id });
+
+    return NextResponse.json(
+      { success: true, message: "Note deleted successfully" },
+      {
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting note: ", error);
+    return NextResponse.json(
+      { success: false, message: "Error occurred while deleting note" },
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      }
+    );
+  }
+}
