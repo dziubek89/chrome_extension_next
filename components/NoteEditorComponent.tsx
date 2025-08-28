@@ -1,5 +1,4 @@
 "use client";
-// import "../styles/NoteEditor.css";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -63,7 +62,12 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: false, codeBlock: false }),
+      StarterKit.configure({
+        heading: false,
+        codeBlock: false,
+        bulletList: {}, // ✅ poprawione
+        orderedList: {}, // ✅ poprawione
+      }),
       TextStyle,
       Color.configure({ types: ["textStyle"] }),
       FontSize,
@@ -74,15 +78,14 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
             HTMLAttributes: {
               class: "code-block",
               style: `
-              background: #000000;
-              color: #ffffff;
-              padding: 10px;
-              margin: 10px;
-              border-radius: 6px;
-              border: 1px solid #333;
-              font-family: monospace;
-
-            `,
+                background: #000000;
+                color: #ffffff;
+                padding: 10px;
+                margin: 10px;
+                border-radius: 6px;
+                border: 1px solid #333;
+                font-family: monospace;
+              `,
             },
           };
         },
@@ -97,10 +100,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
 
   if (!editor) return null;
 
-  const isActive = (type: string) => editor.isActive(type);
-
-  console.log(isActive("bold"));
-
   const buttonStyle = (active: boolean) => ({
     padding: "6px 10px",
     borderRadius: "6px",
@@ -112,23 +111,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
     boxShadow: active ? "0 0 4px rgba(0, 123, 255, 0.5)" : "none",
     transition: "all 0.2s ease",
   });
-
-  // const saveNote = async () => {
-  //   if (!editor) return;
-
-  //   const note = editor.getHTML();
-  //   const currentUrl = window.location.href.split("?")[0];
-
-  //   const response = await sendMessageAsync({
-  //     type: "ADD_NOTE",
-  //     url: currentUrl,
-  //     note: JSON.stringify(note),
-  //     category: "test",
-  //     title: "trst",
-  //   });
-
-  //   console.log(response);
-  // };
 
   const onChangeHandler = (element: string) => {
     switch (element) {
@@ -258,8 +240,36 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
 
       {/* Edytor */}
       <div style={{ flex: 1, overflowY: "auto" }}>
-        <EditorContent editor={editor} style={{}} />
+        <EditorContent
+          editor={editor}
+          className="ProseMirror"
+          style={{
+            minHeight: "200px",
+            padding: "8px",
+            outline: "none",
+            fontSize: "14px",
+          }}
+        />
       </div>
+
+      {/* Style dla list */}
+      <style jsx global>{`
+        .ProseMirror ul {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+          margin: 0.5rem 0;
+        }
+
+        .ProseMirror ol {
+          list-style-type: decimal;
+          padding-left: 1.5rem;
+          margin: 0.5rem 0;
+        }
+
+        .ProseMirror li {
+          margin: 0.3rem 0;
+        }
+      `}</style>
     </div>
   );
 }
