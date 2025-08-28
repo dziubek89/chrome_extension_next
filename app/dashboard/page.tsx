@@ -27,7 +27,8 @@ export default function Dashboard() {
   const [draftCategories, setDraftCategories] = useState<
     Record<string, string>
   >({});
-
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [savedStatus, setSavedStatus] = useState<Record<string, boolean>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteInput, setDeleteInput] = useState("");
 
@@ -142,12 +143,20 @@ export default function Dashboard() {
     setNoteContents((prev) => ({ ...prev, [noteId]: content }));
   };
 
+  const hasChanges = (note: Note) => {
+    return (
+      draftTitles[note._id] !== note.title ||
+      draftCategories[note._id] !== (note.category || "") ||
+      noteContents[note._id] !== note.content
+    );
+  };
+
   const handleSaveNote = async (noteId: string) => {
     const note = notes.find((n) => n._id === noteId);
-    if (!note || !note._id) return;
-    const editedNoteContent = noteContents[note._id];
-    const editedTitle = draftTitles[note._id];
-    const editedCategory = draftCategories[note._id];
+    if (!note) return;
+
+    setSaving((prev) => ({ ...prev, [noteId]: true }));
+    setSavedStatus((prev) => ({ ...prev, [noteId]: false }));
 
     try {
       await fetch(`/api/notes`, {
@@ -155,21 +164,33 @@ export default function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: note._id,
-          title: editedTitle,
-          category: editedCategory,
-          content: editedNoteContent,
+          title: draftTitles[note._id],
+          category: draftCategories[note._id],
+          content: noteContents[note._id],
         }),
       });
 
       setNotes((prev) =>
         prev.map((n) =>
           n._id === noteId
-            ? { ...n, title: editedTitle, category: editedCategory }
+            ? {
+                ...n,
+                title: draftTitles[note._id],
+                category: draftCategories[note._id],
+                content: noteContents[note._id],
+              }
             : n
         )
       );
+
+      setSavedStatus((prev) => ({ ...prev, [noteId]: true }));
+      setTimeout(() => {
+        setSavedStatus((prev) => ({ ...prev, [noteId]: false }));
+      }, 3000);
     } catch (err) {
       console.error("Błąd zapisywania notatki", err);
+    } finally {
+      setSaving((prev) => ({ ...prev, [noteId]: false }));
     }
   };
 
@@ -335,18 +356,37 @@ export default function Dashboard() {
                       {expanded === note._id && (
                         <>
                           <button
-                            // variant="outline"
-                            // size="sm"
-                            className="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800"
+                            className={`flex items-center gap-2 text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center ${
+                              !hasChanges(note) || saving[note._id]
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
                             onClick={() => handleSaveNote(note._id)}
+                            disabled={!hasChanges(note) || saving[note._id]}
                           >
-                            💾 Save
+                            {saving[note._id] ? (
+                              <svg
+                                aria-hidden="true"
+                                className="w-4 h-4 text-gray-200 animate-spin fill-green-600"
+                                viewBox="0 0 100 101"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M100 50.59c0 27.6-22.4 50-50 50S0 78.2 0 50.59 22.4.59 50 .59s50 22.4 50 50z"
+                                  fill="currentColor"
+                                />
+                                <path
+                                  d="M93.96 39.04c2.04.53 4.15-.73 4.7-2.79 1.17-4.5 1.79-9.2 1.79-13.99 0-24.6-19.9-44.5-44.5-44.5S11.5-2.14 11.5 22.45c0 4.8.62 9.5 1.79 13.99.55 2.06 2.66 3.32 4.7 2.79a36 36 0 1 1 75.97 0z"
+                                  fill="currentFill"
+                                />
+                              </svg>
+                            ) : (
+                              "💾 Save"
+                            )}
                           </button>
 
                           <button
-                            // variant="destructive"
-                            className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
-                            // size="sm"
+                            className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center"
                             onClick={() => setDeleteConfirmId(note._id)}
                           >
                             🗑️ Delete
@@ -354,6 +394,11 @@ export default function Dashboard() {
                         </>
                       )}
                     </div>
+                    {savedStatus[note._id] && (
+                      <p className="text-green-600 text-sm mt-2">
+                        ✅ Saved correctly
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               ))}

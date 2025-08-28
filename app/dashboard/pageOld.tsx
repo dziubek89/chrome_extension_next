@@ -28,12 +28,14 @@ export default function Dashboard() {
     Record<string, string>
   >({});
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteInput, setDeleteInput] = useState("");
+
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    console.log(session, "sesja");
     const fetchNotes = async () => {
       try {
         const res = await fetch("/api/all-notes");
@@ -66,9 +68,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.accessToken) {
-      console.log("Token Google:", session.accessToken);
-
-      // Wyślij token do rozszerzenia Chrome
       window.postMessage(
         {
           type: "SET_TOKEN",
@@ -86,7 +85,6 @@ export default function Dashboard() {
 
   const filteredNotes = useMemo(() => {
     let n = [...notes];
-
     if (activeCategory)
       n = n.filter((note) => note.category === activeCategory);
     if (search.trim()) {
@@ -96,13 +94,11 @@ export default function Dashboard() {
           note.content?.toLowerCase().includes(search.toLowerCase())
       );
     }
-
     n.sort((a, b) =>
       sortAsc
         ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-
     return n;
   }, [notes, activeCategory, search, sortAsc]);
 
@@ -172,10 +168,23 @@ export default function Dashboard() {
             : n
         )
       );
-
-      console.log("Notatka zapisana!");
     } catch (err) {
       console.error("Błąd zapisywania notatki", err);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await fetch(`/api/notes`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: noteId }),
+      });
+      setNotes((prev) => prev.filter((n) => n._id !== noteId));
+      setDeleteConfirmId(null);
+      setDeleteInput("");
+    } catch (err) {
+      console.error("Błąd usuwania notatki", err);
     }
   };
 
@@ -191,7 +200,6 @@ export default function Dashboard() {
           >
             📄 Wszystkie notatki
           </Button>
-
           {categories.map((cat) => (
             <div key={cat} className="mb-3">
               <Button
@@ -201,7 +209,6 @@ export default function Dashboard() {
               >
                 📂 {cat.length > 20 ? cat.slice(0, 20) + "..." : cat}
               </Button>
-
               <div className="ml-6 mt-1 space-y-1">
                 {groupedNotes[cat]?.map((note) => (
                   <Button
@@ -233,7 +240,6 @@ export default function Dashboard() {
             }
             className="max-w-sm shadow-sm"
           />
-
           <Button
             variant="outline"
             className="shadow-sm"
@@ -262,61 +268,56 @@ export default function Dashboard() {
                   className="hover:shadow-xl transition rounded-2xl border border-gray-200 bg-white"
                 >
                   <CardContent className="p-6 space-y-3">
-                    {/* 🆕 Edycja tytułu */}
                     {expanded === note._id ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">
-                          Title:
-                        </span>
-                        <Input
-                          value={draftTitles[note._id] || ""}
-                          onChange={(e) =>
-                            handleDraftTitleChange(note._id, e.target.value)
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            Title:
+                          </span>
+                          <Input
+                            value={draftTitles[note._id] || ""}
+                            onChange={(e) =>
+                              handleDraftTitleChange(note._id, e.target.value)
+                            }
+                            placeholder="Wpisz tytuł"
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            Category:
+                          </span>
+                          <Input
+                            value={draftCategories[note._id] || ""}
+                            onChange={(e) =>
+                              handleDraftCategoryChange(
+                                note._id,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Wpisz kategorię"
+                            className="flex-1"
+                          />
+                        </div>
+                        <NoteEditor
+                          note={noteContents[note._id]}
+                          setNoteHandler={(content) =>
+                            handleNoteChange(note._id, content)
                           }
-                          placeholder="Wpisz tytuł"
-                          className="flex-1"
                         />
-                      </div>
+                      </>
                     ) : (
-                      <h3 className="text-lg font-semibold text-gray-800">
-                        {note.title}
-                      </h3>
-                    )}
-
-                    {/* 🆕 Edycja kategorii */}
-                    {expanded === note._id ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">
-                          Category:
-                        </span>
-                        <Input
-                          value={draftCategories[note._id] || ""}
-                          onChange={(e) =>
-                            handleDraftCategoryChange(note._id, e.target.value)
-                          }
-                          placeholder="Wpisz kategorię"
-                          className="flex-1"
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-500 italic">
-                        {note.category || "Inne"}
-                      </p>
-                    )}
-
-                    {/* Edytor treści */}
-                    {expanded === note._id ? (
-                      <NoteEditor
-                        note={noteContents[note._id]}
-                        setNoteHandler={(content) =>
-                          handleNoteChange(note._id, content)
-                        }
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-600 mt-2">
-                        {returnRawTest(noteContents[note._id])}
-                        {/* {noteContents[note._id]?.slice(0, 120) + "..."} */}
-                      </p>
+                      <>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          {note.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 italic">
+                          {note.category || "Inne"}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          {returnRawTest(noteContents[note._id])}
+                        </p>
+                      </>
                     )}
 
                     <div className="flex items-center gap-4 mt-3">
@@ -331,24 +332,26 @@ export default function Dashboard() {
                         {expanded === note._id ? "Pokaż mniej" : "Pokaż więcej"}
                       </Button>
 
-                      {/* 🆕 Zapisz zmiany */}
                       {expanded === note._id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSaveNote(note._id)}
-                        >
-                          💾 Save
-                        </Button>
-                      )}
-                      {expanded === note._id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSaveNote(note._id)}
-                        >
-                          💾 Delete
-                        </Button>
+                        <>
+                          <button
+                            // variant="outline"
+                            // size="sm"
+                            className="text-green-700 hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600 dark:focus:ring-green-800"
+                            onClick={() => handleSaveNote(note._id)}
+                          >
+                            💾 Save
+                          </button>
+
+                          <button
+                            // variant="destructive"
+                            className="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
+                            // size="sm"
+                            onClick={() => setDeleteConfirmId(note._id)}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </>
                       )}
                     </div>
                   </CardContent>
@@ -357,6 +360,44 @@ export default function Dashboard() {
             </div>
           </div>
         ))}
+
+        {deleteConfirmId && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+            <div className="bg-white p-6 rounded-xl w-96 space-y-4">
+              <h3 className="text-lg font-bold">Confirm Delete</h3>
+              <p>
+                To delete this note, type its title exactly:
+                <span className="font-semibold">
+                  {" "}
+                  "{draftTitles[deleteConfirmId]}"
+                </span>
+              </p>
+              <Input
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                placeholder="Type note title..."
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteConfirmId(null);
+                    setDeleteInput("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={deleteInput !== draftTitles[deleteConfirmId]}
+                  onClick={() => handleDeleteNote(deleteConfirmId)}
+                >
+                  Confirm Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {filteredNotes.length === 0 && (
           <p className="text-gray-500 italic text-center mt-10">
