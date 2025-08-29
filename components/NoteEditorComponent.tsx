@@ -92,6 +92,11 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       }),
     ],
     content: note,
+    editorProps: {
+      attributes: {
+        class: "myAddonProseMirrorNext", // <- nadpisuje klasę ProseMirror
+      },
+    },
     onUpdate({ editor }) {
       setNoteHandler(editor.getHTML());
     },
