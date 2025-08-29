@@ -142,13 +142,15 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
         break;
       case "link":
         const url = prompt("Enter URL:");
-        if (url)
+        if (url) {
+          const urlHttp = /^https?:\/\//i.test(url) ? url : `https://${url}`;
           editor
             .chain()
             .focus()
             .extendMarkRange("link")
-            .setLink({ href: url })
+            .setLink({ href: urlHttp })
             .run();
+        }
         break;
       default:
         console.log("Nieznana komenda:", element);
