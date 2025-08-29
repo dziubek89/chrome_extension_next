@@ -6,6 +6,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import CodeBlock from "@tiptap/extension-code-block";
 import { Extension } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
 import { useState } from "react";
 
 type Props = {
@@ -58,6 +59,7 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
     bulletList: false,
     orderedList: false,
     codeBlock: false,
+    link: false,
   });
 
   const editor = useEditor({
@@ -65,8 +67,8 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       StarterKit.configure({
         heading: false,
         codeBlock: false,
-        bulletList: {}, // ✅ poprawione
-        orderedList: {}, // ✅ poprawione
+        bulletList: {},
+        orderedList: {},
       }),
       TextStyle,
       Color.configure({ types: ["textStyle"] }),
@@ -90,11 +92,15 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
           };
         },
       }),
+      Link.configure({
+        openOnClick: true,
+        linkOnPaste: true,
+      }),
     ],
     content: note,
     editorProps: {
       attributes: {
-        class: "myAddonProseMirrorNext", // <- nadpisuje klasę ProseMirror
+        class: "myAddonProseMirrorNext",
       },
     },
     onUpdate({ editor }) {
@@ -134,6 +140,16 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       case "codeBlock":
         editor.chain().focus().toggleCodeBlock().run();
         break;
+      case "link":
+        const url = prompt("Enter URL:");
+        if (url)
+          editor
+            .chain()
+            .focus()
+            .extendMarkRange("link")
+            .setLink({ href: url })
+            .run();
+        break;
       default:
         console.log("Nieznana komenda:", element);
     }
@@ -144,6 +160,7 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
       bulletList: editor.isActive("bulletList"),
       orderedList: editor.isActive("orderedList"),
       codeBlock: editor.isActive("codeBlock"),
+      link: editor.isActive("link"),
     });
   };
 
@@ -167,7 +184,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
           flexWrap: "wrap",
         }}
       >
-        {/* Wybór koloru */}
         <input
           type="color"
           onInput={(e) =>
@@ -182,7 +198,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
           }}
         />
 
-        {/* Rozmiar fontu */}
         <select
           onChange={(e) => {
             const size = e.target.value;
@@ -206,7 +221,6 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
           <option value="24px">24px</option>
         </select>
 
-        {/* Przyciski formatowania */}
         <button
           onClick={() => onChangeHandler("bold")}
           style={buttonStyle(isButtonActive["bold"])}
@@ -241,6 +255,13 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
         >
           {"</> Code"}
         </button>
+
+        <button
+          onClick={() => onChangeHandler("link")}
+          style={buttonStyle(isButtonActive["link"])}
+        >
+          🔗 Link
+        </button>
       </div>
 
       {/* Edytor */}
@@ -273,6 +294,11 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
 
         .ProseMirror li {
           margin: 0.3rem 0;
+        }
+
+        .ProseMirror a {
+          color: #1d4ed8;
+          text-decoration: underline;
         }
       `}</style>
     </div>
