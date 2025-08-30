@@ -69,6 +69,7 @@ export default function NoteEditor({ setNoteHandler, note }: Props) {
         codeBlock: false,
         bulletList: {},
         orderedList: {},
+        link: false,
       }),
       TextStyle,
       Color.configure({ types: ["textStyle"] }),
