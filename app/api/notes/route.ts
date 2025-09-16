@@ -49,19 +49,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const notes = await Note.find(
-      {
-        user: userExists,
-      },
-      "-userId" // projection – wykluczamy userId
-    )
-      .sort({ updatedAt: -1 }) // najnowsze po update
-      .limit(3);
-
-    // console.log(`Found notes: ${notes}`);
+    const [notes, categories] = await Promise.all([
+      Note.find({ userId: userExists }, "-userId")
+        .sort({ updatedAt: -1 })
+        .limit(3),
+      Note.distinct("category", { userId: userExists }),
+    ]);
 
     return NextResponse.json(
-      { success: true, notes: notes },
+      { success: true, notes, categories },
       {
         status: 200,
         headers: {
