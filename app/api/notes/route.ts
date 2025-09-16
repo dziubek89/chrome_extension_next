@@ -6,9 +6,9 @@ import Note from "@/models/note";
 import { handleCors } from "@/lib/cors";
 
 export async function GET(req: NextRequest) {
-  const rawUrl = req.nextUrl.searchParams.get("url") || "";
-  const decondedUrl = decodeURIComponent(rawUrl);
-  console.log(decondedUrl);
+  // const rawUrl = req.nextUrl.searchParams.get("url") || "";
+  // const decondedUrl = decodeURIComponent(rawUrl);
+  // console.log(decondedUrl);
 
   const secret = process.env.NEXTAUTH_SECRET;
   const token = await getToken({ req, secret });
@@ -52,12 +52,13 @@ export async function GET(req: NextRequest) {
     const notes = await Note.find(
       {
         user: userExists,
-        url: decondedUrl,
       },
-      "-userId"
-    );
+      "-userId" // projection – wykluczamy userId
+    )
+      .sort({ updatedAt: -1 }) // najnowsze po update
+      .limit(3);
 
-    console.log(`Found notes: ${notes}`);
+    // console.log(`Found notes: ${notes}`);
 
     return NextResponse.json(
       { success: true, notes: notes },
