@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const PUBLIC_PATHS = [
+  "/",
+  "/pricing",
   "/login",
   "/api/auth", // NextAuth routes muszą być publiczne
   "/favicon.ico",
@@ -14,7 +16,11 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 1. Jeśli ścieżka jest publiczna → przepuszczamy
-  const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+
+  const isPublic =
+    PUBLIC_PATHS.includes(pathname) || // dokładne dopasowanie
+    pathname.startsWith("/api/auth") || // NextAuth routes
+    pathname.startsWith("/_next");
   if (isPublic) {
     return NextResponse.next();
   }
@@ -24,6 +30,8 @@ export async function middleware(req: NextRequest) {
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
+
+  console.log(token);
 
   // 3. Jeśli użytkownik nie jest zalogowany → redirect do /login
   if (!token) {
@@ -56,3 +64,10 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|manifest.json|api/auth|login).*)",
   ],
 };
+
+// export const config = {
+//   matcher: [
+//     // Wszystkie URL-e oprócz publicznych i root '/'
+//     "/((?!_next/static|_next/image|favicon.ico|manifest.json|api/auth|login|$).*)",
+//   ],
+// };
