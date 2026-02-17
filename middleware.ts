@@ -5,6 +5,7 @@ import { getToken } from "next-auth/jwt";
 const PUBLIC_PATHS = [
   "/",
   "/pricing",
+  "/privacy",
   "/login",
   "/api/auth", // NextAuth routes muszą być publiczne
   "/favicon.ico",
@@ -51,7 +52,7 @@ export async function middleware(req: NextRequest) {
     response.headers.set("Access-Control-Allow-Credentials", "true");
     response.headers.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
+      "Content-Type, Authorization",
     );
   }
 

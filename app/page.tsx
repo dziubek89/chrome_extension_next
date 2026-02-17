@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -170,7 +169,7 @@ export default function HomePage() {
             <PricingCard
               highlighted
               title="Premium"
-              price="19 usd / month."
+              price="9 usd / month."
               description="For developers"
               features={[
                 "Unlimited notes",
@@ -178,8 +177,9 @@ export default function HomePage() {
                 "Access your notes on any computer",
                 "Priority support",
               ]}
-              button="Become Premium"
-              onClick={() => router.push("/pricing")}
+              button="Not available"
+              // onClick={() => router.push("/pricing")}
+              onClick={() => router.push("/")}
             />
           </div>
         </div>
